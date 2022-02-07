@@ -102,9 +102,11 @@ type ServiceDesc struct {
 type serviceInfo struct {
 	// Contains the implementation for the methods in this service.
 	serviceImpl interface{}
-	methods     map[string]*MethodDesc
-	streams     map[string]*StreamDesc
-	mdata       interface{}
+	// MethodHandler
+	methods map[string]*MethodDesc
+	// StreamHandler
+	streams map[string]*StreamDesc
+	mdata   interface{}
 }
 
 type serverWorkerData struct {
@@ -118,15 +120,18 @@ type Server struct {
 	// serverOptions 就是描述协议的各种参数选项，包括发送和接收的消息大小、buffer大小等等各种，跟 http Headers 类似
 	opts serverOptions
 
+	// 一个互斥锁
 	mu  sync.Mutex // guards following
 	lis map[net.Listener]bool
 	// conns contains all active server transports. It is a map keyed on a
 	// listener address with the value being the set of active transports
 	// belonging to that listener.
-	conns    map[string]map[transport.ServerTransport]bool
-	serve    bool
-	drain    bool
-	cv       *sync.Cond              // signaled when connections close for GracefulStop
+	conns map[string]map[transport.ServerTransport]bool
+	// server 是否在处理请求的一个状态位
+	serve bool
+	drain bool
+	cv    *sync.Cond // signaled when connections close for GracefulStop
+	// ***比较核心：serviceInfo中包含了 MethodDesc 和 StreamDesc 这两个 map
 	services map[string]*serviceInfo // service name -> service info
 	events   trace.EventLog
 
@@ -631,9 +636,12 @@ func (s *Server) RegisterService(sd *ServiceDesc, ss interface{}) {
 			logger.Fatalf("grpc: Server.RegisterService found the handler of type %v that does not satisfy %v", st, ht)
 		}
 	}
+	// 按照方法名为key，将方法注入到server的service map中
 	s.register(sd, ss)
 }
 
+// 按照方法名为key，将方法注入到server的service map中
+// server 不同 rpc 请求的处理，也是根据 service 中不同的 serviceName 去 service map 中取出不同的 handler 进行处理
 func (s *Server) register(sd *ServiceDesc, ss interface{}) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -776,6 +784,7 @@ func (s *Server) Serve(lis net.Listener) error {
 
 	var tempDelay time.Duration // how long to sleep on accept failure
 
+	// 死循环：调用accept进行端口监听
 	for {
 		rawConn, err := lis.Accept()
 		if err != nil {
@@ -818,6 +827,7 @@ func (s *Server) Serve(lis net.Listener) error {
 		// Make sure we account for the goroutine so GracefulStop doesn't nil out
 		// s.conns before this conn can be added.
 		s.serveWG.Add(1)
+		// 新起了一个协程 调用 handleRawConn
 		go func() {
 			s.handleRawConn(lis.Addr().String(), rawConn)
 			s.serveWG.Done()
@@ -835,6 +845,7 @@ func (s *Server) handleRawConn(lisAddr string, rawConn net.Conn) {
 	rawConn.SetDeadline(time.Now().Add(s.opts.connectionTimeout))
 
 	// Finish handshaking (HTTP2)
+	// 完成了http的握手
 	st := s.newHTTP2Transport(rawConn)
 	rawConn.SetDeadline(time.Time{})
 	if st == nil {
@@ -844,7 +855,9 @@ func (s *Server) handleRawConn(lisAddr string, rawConn net.Conn) {
 	if !s.addConn(lisAddr, st) {
 		return
 	}
+	// 又新起了一个协程，调用了 handleStream
 	go func() {
+		// 进去
 		s.serveStreams(st)
 		s.removeConn(lisAddr, st)
 	}()
@@ -903,6 +916,7 @@ func (s *Server) serveStreams(st transport.ServerTransport) {
 	var wg sync.WaitGroup
 
 	var roundRobinCounter uint32
+	// 重点
 	st.HandleStreams(func(stream *transport.Stream) {
 		wg.Add(1)
 		if s.opts.numServerWorkers > 0 {
@@ -912,6 +926,7 @@ func (s *Server) serveStreams(st transport.ServerTransport) {
 			default:
 				// If all stream workers are busy, fallback to the default code path.
 				go func() {
+					// 重点
 					s.handleStream(st, stream, s.traceInfo(st, stream))
 					wg.Done()
 				}()
@@ -1137,6 +1152,7 @@ func (s *Server) processUnaryRPC(t transport.ServerTransport, stream *transport.
 				IsClientStream: false,
 				IsServerStream: false,
 			}
+			// handler对rpc处理
 			sh.HandleRPC(stream.Context(), statsBegin)
 		}
 		if trInfo != nil {
@@ -1316,6 +1332,7 @@ func (s *Server) processUnaryRPC(t transport.ServerTransport, stream *transport.
 	}
 	opts := &transport.Options{Last: true}
 
+	// response'回写过程
 	if err := s.sendResponse(t, stream, reply, cp, opts, comp); err != nil {
 		if err == io.EOF {
 			// The entire stream is done (for unary RPC only).
@@ -1614,9 +1631,11 @@ func (s *Server) handleStream(t transport.ServerTransport, stream *transport.Str
 	service := sm[:pos]
 	method := sm[pos+1:]
 
+	// 根据servicename去server中的service map，去除handler进行处理
 	srv, knownService := s.services[service]
 	if knownService {
 		if md, ok := srv.methods[method]; ok {
+			// hello world 这个 demo 的请求不涉及到 stream ，所以直接取出 handler ，然后传给 processUnaryRPC 这个方法进行处理
 			s.processUnaryRPC(t, stream, srv, md, trInfo)
 			return
 		}

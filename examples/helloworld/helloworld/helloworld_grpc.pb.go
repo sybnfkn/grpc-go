@@ -69,6 +69,7 @@ type UnsafeGreeterServer interface {
 }
 
 func RegisterGreeterServer(s grpc.ServiceRegistrar, srv GreeterServer) {
+	// 传入了一个 ServiceDesc 的数据结构 ：Greeter_ServiceDesc
 	s.RegisterService(&Greeter_ServiceDesc, srv)
 }
 

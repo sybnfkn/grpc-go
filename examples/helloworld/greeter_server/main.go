@@ -51,12 +51,12 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
-	// 创建server
+	// 1.创建server
 	s := grpc.NewServer()
-	// server的注册
+	// 2.server的注册    调用到pb里面去了
 	pb.RegisterGreeterServer(s, &server{})
 	log.Printf("server listening at %v", lis.Addr())
-	// 调用serve监听端口并处理请求
+	// 3.调用serve监听端口并处理请求
 	if err := s.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %v", err)
 	}
