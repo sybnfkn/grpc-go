@@ -254,6 +254,7 @@ func DialContext(ctx context.Context, target string, opts ...DialOption) (conn *
 	}
 
 	// Determine the resolver to use.
+	// 确定最终要使用的解析器，默认是passthrough
 	resolverBuilder, err := cc.parseTargetAndFindResolver()
 	if err != nil {
 		return nil, err
@@ -1613,6 +1614,7 @@ func (cc *ClientConn) getResolver(scheme string) resolver.Builder {
 			return rb
 		}
 	}
+	// 获取了resolverBuilder
 	return resolver.Get(scheme)
 }
 
@@ -1632,6 +1634,7 @@ func (cc *ClientConn) parseTargetAndFindResolver() (resolver.Builder, error) {
 	channelz.Infof(logger, cc.channelzID, "original dial target is: %q", cc.target)
 
 	var rb resolver.Builder
+	// 解析target
 	parsedTarget, err := parseTarget(cc.target)
 	if err != nil {
 		channelz.Infof(logger, cc.channelzID, "dial target %q parse failed: %v", cc.target, err)
@@ -1639,6 +1642,7 @@ func (cc *ClientConn) parseTargetAndFindResolver() (resolver.Builder, error) {
 		channelz.Infof(logger, cc.channelzID, "parsed dial target is: %+v", parsedTarget)
 		rb = cc.getResolver(parsedTarget.Scheme)
 		if rb != nil {
+			// 确定
 			cc.parsedTarget = parsedTarget
 			return rb, nil
 		}

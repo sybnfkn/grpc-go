@@ -32,6 +32,7 @@ import (
 
 var (
 	// m is a map from scheme to resolver builder.
+	// 解析builder存放在builder中
 	m = make(map[string]Builder)
 	// defaultScheme is the default scheme to use.
 	defaultScheme = "passthrough"
@@ -53,6 +54,7 @@ func Register(b Builder) {
 //
 // If no builder is register with the scheme, nil will be returned.
 func Get(scheme string) Builder {
+	// 根据 scheme 从map中获取对应的 resolver#Builder
 	if b, ok := m[scheme]; ok {
 		return b
 	}

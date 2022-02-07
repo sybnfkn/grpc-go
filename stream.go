@@ -787,6 +787,7 @@ func (cs *clientStream) SendMsg(m interface{}) (err error) {
 		cs.sentLast = true
 	}
 
+	// 数据准备：数据头部/压缩等
 	// load hdr, payload, data
 	hdr, payload, data, err := prepareMsg(m, cs.codec, cs.cp, cs.comp)
 	if err != nil {
@@ -799,6 +800,7 @@ func (cs *clientStream) SendMsg(m interface{}) (err error) {
 	}
 	msgBytes := data // Store the pointer before setting to nil. For binary logging.
 	op := func(a *csAttempt) error {
+		// 发送消息
 		err := a.sendMsg(m, hdr, payload, data)
 		// nil out the message and uncomp when replaying; they are only needed for
 		// stats which is disabled for subsequent attempts.
