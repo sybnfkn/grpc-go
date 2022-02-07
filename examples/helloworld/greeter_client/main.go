@@ -42,16 +42,19 @@ var (
 func main() {
 	flag.Parse()
 	// Set up a connection to the server.
+	// 创建一个客户端链接conn
 	conn, err := grpc.Dial(*addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Fatalf("did not connect: %v", err)
 	}
 	defer conn.Close()
+	// 通过一个 conn 创建一个客户端
 	c := pb.NewGreeterClient(conn)
 
 	// Contact the server and print out its response.
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
+	// 发起rpc调用
 	r, err := c.SayHello(ctx, &pb.HelloRequest{Name: *name})
 	if err != nil {
 		log.Fatalf("could not greet: %v", err)

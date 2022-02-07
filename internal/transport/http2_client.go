@@ -969,6 +969,7 @@ func (t *http2Client) Write(s *Stream, hdr []byte, data []byte, opts *Options) e
 			return err
 		}
 	}
+	//把 data 放到了一个 controlBuf 的结构体里面，controlBuf 是 http2 客户端发送数据的实现
 	return t.controlBuf.put(df)
 }
 

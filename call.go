@@ -34,6 +34,7 @@ func (cc *ClientConn) Invoke(ctx context.Context, method string, args, reply int
 	if cc.dopts.unaryInt != nil {
 		return cc.dopts.unaryInt(ctx, method, args, reply, cc, invoke, opts...)
 	}
+	// 进入
 	return invoke(ctx, method, args, reply, cc, opts...)
 }
 
@@ -67,8 +68,10 @@ func invoke(ctx context.Context, method string, req, reply interface{}, cc *Clie
 	if err != nil {
 		return err
 	}
+	// 进入：最终通过 ClientTransport 的 Write 方法
 	if err := cs.SendMsg(req); err != nil {
 		return err
 	}
+	// 接受数据
 	return cs.RecvMsg(reply)
 }

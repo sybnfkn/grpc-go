@@ -36,7 +36,13 @@ type pickerWrapper struct {
 	mu         sync.Mutex
 	done       bool
 	blockingCh chan struct{}
-	picker     balancer.Picker
+	// 一个负载均衡器，它里面只有一个 Pick 方法，它返回一个 SubConn 连接。
+	/**
+	在分布式环境下，可能会存在多个 client 和 多个 server，client 发起一个 rpc 调用之前，需要通过 balancer 去找到一个 server 的 address，
+	balancer 的 Picker 类返回一个 SubConn，SubConn 里面包含了多个 server 的 address，假如返回的 SubConn 是 “READY” 状态，grpc 会发送 RPC 请求，
+	否则则会阻塞，等待 UpdateBalancerState 这个方法更新连接的状态并且通过 picker 获取一个新的 SubConn 连接。
+	*/
+	picker balancer.Picker
 }
 
 func newPickerWrapper() *pickerWrapper {

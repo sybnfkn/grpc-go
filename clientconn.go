@@ -102,6 +102,7 @@ const (
 
 // Dial creates a client connection to the given target.
 func Dial(target string, opts ...DialOption) (*ClientConn, error) {
+	// 实例化了一个 ClientConn 的结构体，然后主要为 ClientConn 的 dopts 的各个属性进行初始化赋值
 	return DialContext(context.Background(), target, opts...)
 }
 
@@ -133,6 +134,7 @@ func (dcs *defaultConfigSelector) SelectConfig(rpcInfo iresolver.RPCInfo) (*ires
 // https://github.com/grpc/grpc/blob/master/doc/naming.md.
 // e.g. to use dns resolver, a "dns:///" prefix should be applied to the target.
 func DialContext(ctx context.Context, target string, opts ...DialOption) (conn *ClientConn, err error) {
+	// 对客户端属性的一些设置，包括压缩解压缩、是否需要认证、超时时间、是否重试等信息
 	cc := &ClientConn{
 		target:            target,
 		csMgr:             &connectivityStateManager{},
@@ -161,6 +163,7 @@ func DialContext(ctx context.Context, target string, opts ...DialOption) (conn *
 
 	if channelz.IsOn() {
 		if cc.dopts.channelzParentID != 0 {
+			// 初始化channelz
 			cc.channelzID = channelz.RegisterChannel(&channelzChannel{cc}, cc.dopts.channelzParentID, target)
 			channelz.AddTraceEvent(logger, cc.channelzID, 0, &channelz.TraceEventDesc{
 				Desc:     "Channel Created",
@@ -282,8 +285,9 @@ func DialContext(ctx context.Context, target string, opts ...DialOption) (conn *
 		credsClone = creds.Clone()
 	}
 	cc.balancerBuildOpts = balancer.BuildOptions{
-		DialCreds:        credsClone,
-		CredsBundle:      cc.dopts.copts.CredsBundle,
+		DialCreds:   credsClone,
+		CredsBundle: cc.dopts.copts.CredsBundle,
+		// dialer 中包括了连接建立、地址解析、服务发现、长连接等等具体策略的实现
 		Dialer:           cc.dopts.copts.Dialer,
 		Authority:        cc.authority,
 		CustomUserAgent:  cc.dopts.copts.UserAgent,
@@ -394,6 +398,7 @@ func getChainStreamer(interceptors []StreamClientInterceptor, curr int, finalStr
 
 // connectivityStateManager keeps the connectivity.State of ClientConn.
 // This struct will eventually be exported so the balancers can access it.
+// 连接的状态管理器，每个连接具有 “IDLE”、“CONNECTING”、“READY”、“TRANSIENT_FAILURE”、“SHUTDOW N”、“Invalid-State” 这几种状态
 type connectivityStateManager struct {
 	mu         sync.Mutex
 	state      connectivity.State
@@ -463,6 +468,7 @@ var _ ClientConnInterface = (*ClientConn)(nil)
 // resolution, TCP connection establishment (with retries and backoff) and TLS
 // handshakes. It also handles errors on established connections by
 // re-resolving the name and reconnecting.
+// 对客户端属性的一些设置，包括压缩解压缩、是否需要认证、超时时间、是否重试等信息
 type ClientConn struct {
 	ctx    context.Context
 	cancel context.CancelFunc
@@ -471,10 +477,12 @@ type ClientConn struct {
 	parsedTarget resolver.Target
 	authority    string
 	dopts        dialOptions
-	csMgr        *connectivityStateManager
+	//连接的状态管理器，每个连接具有 “IDLE”、“CONNECTING”、“READY”、“TRANSIENT_FAILURE”、“SHUTDOW N”、“Invalid-State” 这几种状态
+	csMgr *connectivityStateManager
 
 	balancerBuildOpts balancer.BuildOptions
-	blockingpicker    *pickerWrapper
+	// pickerWrapper 是对 balancer.Picker 的一层封装，balancer.Picker 其实是一个负载均衡器，它里面只有一个 Pick 方法，它返回一个 SubConn 连接。
+	blockingpicker *pickerWrapper
 
 	safeConfigSelector iresolver.SafeConfigSelector
 
@@ -490,6 +498,7 @@ type ClientConn struct {
 
 	firstResolveEvent *grpcsync.Event
 
+	// channelz 主要用来监测 server 和 channel 的状态
 	channelzID int64 // channelz unique identification number
 	czData     *channelzData
 

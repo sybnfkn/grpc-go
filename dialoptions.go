@@ -51,10 +51,11 @@ type dialOptions struct {
 	block           bool
 	returnLastError bool
 	timeout         time.Duration
-	scChan          <-chan ServiceConfig
-	authority       string
-	copts           transport.ConnectOptions
-	callOptions     []CallOption
+	// 通过介绍得知 ServiceConfig 是服务提供方约定的一些参数。这里说明 client 提供给 server 一个可以通过 channel 来修改这些参数的入口
+	scChan      <-chan ServiceConfig
+	authority   string
+	copts       transport.ConnectOptions
+	callOptions []CallOption
 	// This is used by WithBalancerName dial option.
 	balancerBuilder             balancer.Builder
 	channelzParentID            int64

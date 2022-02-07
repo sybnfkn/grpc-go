@@ -1266,7 +1266,7 @@ func (as *addrConnStream) SendMsg(m interface{}) (err error) {
 	if len(payld) > *as.callInfo.maxSendMessageSize {
 		return status.Errorf(codes.ResourceExhausted, "trying to send message larger than max (%d vs. %d)", len(payld), *as.callInfo.maxSendMessageSize)
 	}
-
+	// 最终是通过 a.t.Write 发出的数据写操作，a.t 是一个 ClientTransport 类型，所以最终是通过 ClientTransport 这个结构体的 Write 方法发送数据
 	if err := as.t.Write(as.s, hdr, payld, &transport.Options{Last: !as.desc.ClientStreams}); err != nil {
 		if !as.desc.ClientStreams {
 			// For non-client-streaming RPCs, we return nil instead of EOF on error
@@ -1307,6 +1307,7 @@ func (as *addrConnStream) RecvMsg(m interface{}) (err error) {
 		// Only initialize this state once per stream.
 		as.decompSet = true
 	}
+	// 数据接受
 	err = recv(as.p, as.codec, as.s, as.dc, m, *as.callInfo.maxReceiveMessageSize, nil, as.decomp)
 	if err != nil {
 		if err == io.EOF {
