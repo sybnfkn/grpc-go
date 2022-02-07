@@ -115,6 +115,7 @@ type serverWorkerData struct {
 
 // Server is a gRPC server to serve RPC requests.
 type Server struct {
+	// serverOptions 就是描述协议的各种参数选项，包括发送和接收的消息大小、buffer大小等等各种，跟 http Headers 类似
 	opts serverOptions
 
 	mu  sync.Mutex // guards following

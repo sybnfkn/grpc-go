@@ -31,7 +31,7 @@ import (
 )
 
 const (
-	defaultName = "world"
+	defaultName = "hello world"
 )
 
 var (
