@@ -183,6 +183,7 @@ func newClientStream(ctx context.Context, desc *StreamDesc, cc *ClientConn, meth
 	var mc serviceconfig.MethodConfig
 	var onCommit func()
 	var newStream = func(ctx context.Context, done func()) (iresolver.ClientStream, error) {
+		// 这里
 		return newClientStreamWithParams(ctx, desc, cc, method, mc, onCommit, done, opts...)
 	}
 
@@ -277,6 +278,7 @@ func newClientStreamWithParams(ctx context.Context, desc *StreamDesc, cc *Client
 		callHdr.Creds = c.creds
 	}
 
+	// 客户端流的结构体
 	cs := &clientStream{
 		callHdr:      callHdr,
 		ctx:          ctx,
@@ -297,6 +299,7 @@ func newClientStreamWithParams(ctx context.Context, desc *StreamDesc, cc *Client
 	}
 	cs.binlog = binarylog.GetMethodLogger(method)
 
+	// 进入
 	if err := cs.newAttemptLocked(false /* isTransparent */); err != nil {
 		cs.finish(err)
 		return nil, err
@@ -407,6 +410,7 @@ func (cs *clientStream) newAttemptLocked(isTransparent bool) (retErr error) {
 			"content-type", grpcutil.ContentType(cs.callHdr.ContentSubtype),
 		))
 	}
+	// 获取到getTransport
 	t, done, err := cs.cc.getTransport(ctx, cs.callInfo.failFast, cs.callHdr.Method)
 	if err != nil {
 		return err

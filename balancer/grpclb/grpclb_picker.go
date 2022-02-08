@@ -161,6 +161,10 @@ func newLBPicker(serverList []*lbpb.Server, readySCs []balancer.SubConn, stats *
 	}
 }
 
+/**
+可以看到这其实是一个轮询实现。用一个指针表示这次取的位置，取过之后就更新这个指针为下一位。'
+Pick 的返回是一个 SubConn 结构，SubConn 里面就包含了 server 的地址列表，此时寻址就完成了。
+*/
 func (p *lbPicker) Pick(balancer.PickInfo) (balancer.PickResult, error) {
 	p.mu.Lock()
 	defer p.mu.Unlock()

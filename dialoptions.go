@@ -57,6 +57,7 @@ type dialOptions struct {
 	copts       transport.ConnectOptions
 	callOptions []CallOption
 	// This is used by WithBalancerName dial option.
+	// 负载均衡器
 	balancerBuilder             balancer.Builder
 	channelzParentID            int64
 	disableServiceConfig        bool

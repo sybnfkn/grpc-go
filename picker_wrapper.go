@@ -129,6 +129,7 @@ func (pw *pickerWrapper) pick(ctx context.Context, failfast bool, info balancer.
 		p := pw.picker
 		pw.mu.Unlock()
 
+		// 开始进行挑拣，lbBalancer 实例，
 		pickResult, err := p.Pick(info)
 
 		if err != nil {
@@ -148,11 +149,13 @@ func (pw *pickerWrapper) pick(ctx context.Context, failfast bool, info balancer.
 			return nil, nil, status.Error(codes.Unavailable, err.Error())
 		}
 
+		// 将 SubConn 转换成了一个 acBalancerWrapper ，然后获取其中的 addrConn 对象，接着调用 getReadyTransport 方法
 		acw, ok := pickResult.SubConn.(*acBalancerWrapper)
 		if !ok {
 			logger.Errorf("subconn returned from pick is type %T, not *acBalancerWrapper", pickResult.SubConn)
 			continue
 		}
+		// getReadyTransport 这个方法返回一个 Ready 状态的网络连接，假如连接状态是 IDLE 状态，会调用 connect 方法去进行客户端连接，connect 方法如下
 		if t := acw.getAddrConn().getReadyTransport(); t != nil {
 			if channelz.IsOn() {
 				return t, doneChannelzWrapper(acw, pickResult.Done), nil

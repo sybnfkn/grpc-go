@@ -103,6 +103,7 @@ func (ccr *ccResolverWrapper) UpdateState(s resolver.State) error {
 		ccr.addChannelzTraceEvent(s)
 	}
 	ccr.curState = s
+	// 对负载均衡器初始化
 	if err := ccr.cc.updateResolverState(ccr.curState, nil); err == balancer.ErrBadResolverState {
 		return balancer.ErrBadResolverState
 	}

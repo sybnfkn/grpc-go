@@ -64,7 +64,9 @@ func newCCBalancerWrapper(cc *ClientConn, b balancer.Builder, bopts balancer.Bui
 		done:     grpcsync.NewEvent(),
 		subConns: make(map[*acBalancerWrapper]struct{}),
 	}
+	// 这个里面不知道做什么
 	go ccb.watcher()
+	// 返回一个lbBalance
 	ccb.balancer = b.Build(ccb, bopts)
 	_, ccb.hasExitIdle = ccb.balancer.(balancer.ExitIdler)
 	return ccb

@@ -555,6 +555,7 @@ func (cc *ClientConn) Connect() {
 	}
 	//
 	for ac := range cc.conns {
+		// 起一个协程创建链接
 		go ac.connect()
 	}
 }
@@ -609,6 +610,7 @@ func init() {
 
 func (cc *ClientConn) maybeApplyDefaultServiceConfig(addrs []resolver.Address) {
 	if cc.sc != nil {
+		// 负载均衡器初始化
 		cc.applyServiceConfigAndBalancer(cc.sc, nil, addrs)
 		return
 	}
@@ -736,6 +738,7 @@ func (cc *ClientConn) switchBalancer(name string) {
 		cc.mu.Lock()
 	}
 
+	// 根据名字返回一个balancer
 	builder := balancer.Get(name)
 	if builder == nil {
 		channelz.Warningf(logger, cc.channelzID, "Channel switches to new LB policy %q due to fallback from invalid balancer name", PickFirstBalancerName)
@@ -746,6 +749,7 @@ func (cc *ClientConn) switchBalancer(name string) {
 	}
 
 	cc.curBalancerName = builder.Name()
+	// 负载均衡器创建，并且赋值
 	cc.balancerWrapper = newCCBalancerWrapper(cc, builder, cc.balancerBuildOpts)
 }
 
@@ -862,6 +866,7 @@ func (ac *addrConn) connect() error {
 	ac.updateConnectivityState(connectivity.Connecting, nil)
 	ac.mu.Unlock()
 
+	// 这一行可以看到 connect 方法新起协程异步去与 server 建立连接
 	ac.resetTransport()
 	return nil
 }
@@ -972,6 +977,7 @@ func (cc *ClientConn) healthCheckConfig() *healthCheckConfig {
 }
 
 func (cc *ClientConn) getTransport(ctx context.Context, failfast bool, method string) (transport.ClientTransport, func(balancer.DoneInfo), error) {
+	// 具体寻址的方法
 	t, done, err := cc.blockingpicker.pick(ctx, failfast, balancer.PickInfo{
 		Ctx:            ctx,
 		FullMethodName: method,
@@ -1201,6 +1207,7 @@ func (ac *addrConn) resetTransport() {
 	ac.updateConnectivityState(connectivity.Connecting, nil)
 	ac.mu.Unlock()
 
+	// 轮询 address 与 每个 address 的 server 建立连接
 	if err := ac.tryAllAddrs(addrs, connectDeadline); err != nil {
 		ac.cc.resolveNow(resolver.ResolveNowOptions{})
 		// After exhausting all addresses, the addrConn enters
@@ -1247,6 +1254,7 @@ func (ac *addrConn) resetTransport() {
 // connected, or updates ac appropriately with the new transport.
 func (ac *addrConn) tryAllAddrs(addrs []resolver.Address, connectDeadline time.Time) error {
 	var firstConnErr error
+	// 遍历所有地址，进行轮训创建链接
 	for _, addr := range addrs {
 		ac.mu.Lock()
 		if ac.state == connectivity.Shutdown {
@@ -1266,6 +1274,7 @@ func (ac *addrConn) tryAllAddrs(addrs []resolver.Address, connectDeadline time.T
 
 		channelz.Infof(logger, ac.channelzID, "Subchannel picks a new address %q to connect", addr.Addr)
 
+		// 创建链接
 		err := ac.createTransport(addr, copts, connectDeadline)
 		if err == nil {
 			return nil

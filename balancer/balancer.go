@@ -49,6 +49,7 @@ var (
 // NOTE: this function must only be called during initialization time (i.e. in
 // an init() function), and is not thread-safe. If multiple Balancers are
 // registered with the same name, the one registered last will take effect.
+// 其他地方init初始化时候，调用这里进行注册
 func Register(b Builder) {
 	m[strings.ToLower(b.Name())] = b
 }

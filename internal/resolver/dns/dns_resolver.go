@@ -117,6 +117,7 @@ builder
 */
 type dnsBuilder struct{}
 
+// 构建一个Resolver实例
 // Build creates and starts a DNS resolver that watches the name resolution of the target.
 func (b *dnsBuilder) Build(target resolver.Target, cc resolver.ClientConn, opts resolver.BuildOptions) (resolver.Resolver, error) {
 	host, port, err := parseTarget(target.Endpoint, defaultPort)
@@ -153,6 +154,7 @@ func (b *dnsBuilder) Build(target resolver.Target, cc resolver.ClientConn, opts 
 	}
 
 	d.wg.Add(1)
+	// 一个监控线程，监控产生的resolver的状态，使用一个for循环无限监听，通过chan进行消息通知
 	go d.watcher()
 	return d, nil
 }
@@ -215,12 +217,15 @@ func (d *dnsResolver) Close() {
 func (d *dnsResolver) watcher() {
 	defer d.wg.Done()
 	backoffIndex := 1
+	// 无限循环
 	for {
+		// 进入：返回*resolver.State，携带地址列表：Addresses []Address
 		state, err := d.lookup()
 		if err != nil {
 			// Report error to the underlying grpc.ClientConn.
 			d.cc.ReportError(err)
 		} else {
+			// 更新状态，对负载均衡器初始化
 			err = d.cc.UpdateState(*state)
 		}
 
@@ -342,6 +347,7 @@ func (d *dnsResolver) lookupHost() ([]resolver.Address, error) {
 }
 
 func (d *dnsResolver) lookup() (*resolver.State, error) {
+	// 实现了 dns 协议对指定的service服务，protocol协议以及name域名进行srv查询，返回server 的 address 列表。
 	srv, srvErr := d.lookupSRV()
 	addrs, hostErr := d.lookupHost()
 	if hostErr != nil && (srvErr != nil || len(srv) == 0) {
