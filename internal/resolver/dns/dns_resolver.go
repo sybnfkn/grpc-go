@@ -112,6 +112,9 @@ func NewBuilder() resolver.Builder {
 	return &dnsBuilder{}
 }
 
+/**
+builder
+*/
 type dnsBuilder struct{}
 
 // Build creates and starts a DNS resolver that watches the name resolution of the target.
@@ -172,6 +175,9 @@ func (deadResolver) ResolveNow(resolver.ResolveNowOptions) {}
 
 func (deadResolver) Close() {}
 
+/**
+resolver
+*/
 // dnsResolver watches for the name resolution update for a non-IP target.
 type dnsResolver struct {
 	host     string

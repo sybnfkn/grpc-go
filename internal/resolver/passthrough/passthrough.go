@@ -26,6 +26,9 @@ const scheme = "passthrough"
 
 type passthroughBuilder struct{}
 
+/**
+返回了一个带有 address 的 resolver，这个地址就是 server 的地址列表。
+*/
 func (*passthroughBuilder) Build(target resolver.Target, cc resolver.ClientConn, opts resolver.BuildOptions) (resolver.Resolver, error) {
 	r := &passthroughResolver{
 		target: target,
@@ -39,6 +42,9 @@ func (*passthroughBuilder) Scheme() string {
 	return scheme
 }
 
+/**
+reslover
+*/
 type passthroughResolver struct {
 	target resolver.Target
 	cc     resolver.ClientConn
@@ -52,6 +58,7 @@ func (*passthroughResolver) ResolveNow(o resolver.ResolveNowOptions) {}
 
 func (*passthroughResolver) Close() {}
 
+// 进行注册 注册到：m = make(map[string]Builder)
 func init() {
 	resolver.Register(&passthroughBuilder{})
 }

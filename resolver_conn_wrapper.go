@@ -69,6 +69,7 @@ func newCCResolverWrapper(cc *ClientConn, rb resolver.Builder) (*ccResolverWrapp
 	// accessing ccr.resolver which is being assigned here.
 	ccr.resolverMu.Lock()
 	defer ccr.resolverMu.Unlock()
+	// 默认构建一个passthrough的reslover构建一个
 	ccr.resolver, err = rb.Build(cc.parsedTarget, ccr, rbo)
 	if err != nil {
 		return nil, err

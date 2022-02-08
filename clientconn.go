@@ -296,6 +296,7 @@ func DialContext(ctx context.Context, target string, opts ...DialOption) (conn *
 		Target:           cc.parsedTarget,
 	}
 
+	// 构建一个resolver
 	// Build the resolver.
 	rWrapper, err := newCCResolverWrapper(cc, resolverBuilder)
 	if err != nil {
