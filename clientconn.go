@@ -1279,7 +1279,6 @@ func (ac *addrConn) tryAllAddrs(addrs []resolver.Address, connectDeadline time.T
 		if err == nil {
 			return nil
 		}
-
 		if firstConnErr == nil {
 			firstConnErr = err
 		}
