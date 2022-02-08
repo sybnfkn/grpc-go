@@ -306,9 +306,10 @@ func DialContext(ctx context.Context, target string, opts ...DialOption) (conn *
 	cc.mu.Unlock()
 
 	// A blocking dial blocks until the clientConn is ready.
+	// 阻塞直到链接创建完毕
 	if cc.dopts.block {
 		for {
-			cc.Connect()
+			cc.Connect() // 创建链接
 			s := cc.GetState()
 			if s == connectivity.Ready {
 				break
@@ -551,6 +552,7 @@ func (cc *ClientConn) Connect() {
 	if cc.balancerWrapper != nil && cc.balancerWrapper.exitIdle() {
 		return
 	}
+	//
 	for ac := range cc.conns {
 		go ac.connect()
 	}
