@@ -4,6 +4,8 @@ import (
 	"context"
 	"google.golang.org/grpc"
 	pb "google.golang.org/grpc/examples/mytest/proto"
+	"log"
+	"net"
 )
 
 type SearchService struct {
@@ -20,4 +22,11 @@ const PORT = "9001"
 func main() {
 	server := grpc.NewServer()
 	pb.RegisterSearchServiceServer(server, &SearchService{})
+
+	lis, err := net.Listen("tcp", ":"+PORT)
+	if err != nil {
+		log.Fatalf("net.Listen err:%v", err)
+	}
+
+	server.Serve(lis)
 }
