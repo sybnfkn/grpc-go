@@ -9,7 +9,7 @@ import (
 )
 
 type SearchService struct {
-	// 不明白这行什么意思
+	// 不明白这行什么意思,不写这个，相当于下面Search实现不了接口，会出现报错
 	pb.UnsafeSearchServiceServer
 }
 
