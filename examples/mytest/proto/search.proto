@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+// 生成到当前目录
+// 其中proto表明了对应的包名
+option go_package = ".;proto";
+
+
+service SearchService {
+  rpc Search(SearchRequest) returns (SearchResponse) {}
+}
+
+message SearchRequest {
+  string request = 1;
+}
+
+message SearchResponse {
+  string response = 1;
+}
